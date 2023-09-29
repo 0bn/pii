@@ -4,16 +4,17 @@ import datetime
 import mysql.connector
 import os
 from tkinter import *
-from tkinter import ttk
+from WizardCode import fechar_janela_anterior
+
+
 
 #especifica a pasta WizardCode como a pasta atual
 os.chdir(r".\jogo\WizardCode")
-
 # conecta ao banco de dados 
 db = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="root",
+    password="Mateusw23011890",
     database="jogo")
 
 # define o cursor
@@ -119,97 +120,24 @@ class Player(pygame.sprite.Sprite):
 
     def atualizar_informacoes(self):
         # Renderiza o texto para cada informação
+        
         texto_vidas = fonte.render("Vidas: " + str(vidas), True, (255, 255, 255))  # Preto
         texto_acertos = fonte.render("Acertos: " + str(acertos), True, (255, 255, 255))
-        texto_cronometro = fonte.render(f"Tempo: {datetime.timedelta(seconds=cronometro *-1)}", True, (255, 255, 255))
+        global temp
+        temp = datetime.timedelta(seconds=cronometro *-1)
+        texto_cronometro = fonte.render(f"Tempo: {temp}", True, (255, 255, 255))
+
+        #query = "INSERT INTO rank (temp) VALUES (%s)"
         # Posiciona os textos na tela
         TELA.blit(texto_acertos, (10, 10))
         TELA.blit(texto_vidas, (10, 50))
         TELA.blit(texto_cronometro, (10, 90))
 
-def open_ranking(window = None, loginResult = None):
 
-    if window:
-        window.destroy()
-
-    root = Tk()
-    root.geometry("925x500+300+200")
-    root.title("WizardCode")
-    root.resizable(False, False)
-    root.config(bg="steelblue3") 
-
-    def generateRanks(gameType):
-        times = conn.cursor(gameType) # chama o sql p puxar do ranking
-        ranks = []
-
-        flag = True
-
-        for i in range(len(times)):
-            # userId, time, game, ra, password, name 
-            #   0      1     2    3      4       5
-
-            if flag:
-                color = "#414C55"
-            else:
-                color = "#313539"
-
-            flag = not flag
-
-            rank = f"Posiçao: {i+1} , nome: {[i][1]}, tempo: {datetime.timedelta(seconds=times[i][1])}" # SUBSTITUIR OS ** PELO NOME DA VARIAVEL DOS NOMES NO BD
-            ranks.append(rank)
-
-        return ranks
-
-    columns = ('position','name','time')
-
-    global tree
-    tree = ttk.Treeview(root, columns=columns, show='headings', height=10, padding=2)
-
-
-    def exibirRank(gameType, tree = None):
-
-        rank = generateRanks(gameType)
-
-        flag = True
-
-        s = ttk.Style()
-        s.theme_use("clam")
-
-        s.map("Treeview", background=[('disabled','#000'), ('active','#fff')],foreground=[('disabled','#000')])
-        s.configure("Treeview", rowheight=35, fieldbackground="steelblue3", borderwidth=0, font=("Arial",12))
-        s.configure("Treeview.Heading", background="black", borderwidth=0, font=("Arial",16), foreground="white")
-
-
-
-        columns = ('position','name','time')
-        tree = ttk.Treeview(root, columns=columns, show='headings', height=10, padding=2)
-
-        tree.heading('position', text='POSIÇÃO')
-        tree.heading('name', text='NOME')
-        tree.heading('time', text='TEMPO')
-
-        tree.column('position', anchor=CENTER, width=200)
-        tree.column('name', anchor=CENTER, width=300)
-        tree.column('time', anchor=CENTER, width=200)
-
-        tree.bind('<Motion>', 'break')
-
-        positions = []
-
-        for i in range(len(rank)):
-
-            positions.append((f'{rank[i].position}°', f'{rank[i].name}', f'{rank[i].time}'))
-
-
-        tree.pack( anchor='c', pady=60)
-
-    buttonsArea = Frame(root, width=500, height=30, bg="darkseagree")
-    buttonsArea.place(x = 150, y = 10)
-
-    root.mainloop()
 
 # INICIO DO JOGO--------------------------------------------------------------------------------------------
-pygame.init()
+
+    #pygame.init()
 LARGURA = 1200
 ALTURA = 900
 TAMANHO = [LARGURA, ALTURA]
@@ -326,10 +254,6 @@ def converterTempo(segundos):
         tempo = str(datetime.timedelta(seconds=segundos)) # PRECISA FAZER P JOGAR PARA O BANCO DE DADOS O TEMPO
         return tempo
 
-def cadastrarPontuacao():
-    cursor_ranking.execute(f"""INSERT INTO Ranking (Tempo_Total, pontos, email) VALUES ("{datetime.timedelta(seconds=cronometro *-1)}", {acertos}, "teste@teste.com")""")
-    db.commit()
-    return
 
 
 tela_pergunta = False
@@ -426,21 +350,31 @@ while not done:
         print("Player errou")
 
     # muda skin
-    if 7 > acertos >= 3:
+        
+        #ranking()
+    if acertos < 3:
+        player.mudar_imagem("spriteFazendeiro.png")
+    elif 3 == acertos < 6: 
         player.mudar_imagem('SpritePescador.png')
-    elif 10 > acertos >= 6:
+    elif 6 == acertos < 9:
         player.mudar_imagem('SpriteFerreiro.png')
-    elif 13 > acertos >= 9:
+    elif 9 == acertos < 12:
         player.mudar_imagem('SpriteCavaleiro.png')
-    elif acertos >= 12:
+    elif 12 == acertos <15:
         player.mudar_imagem('SpriteMago.png')
-    elif acertos >= 13 and cadastrado == False:
-        cadastrado = True
-        cadastrarPontuacao()
+    elif acertos == 15:
+        print(temp)
+        pygame.quit()
+        os.system(r"python Ranking.py")
+        
+
+
 
 
     if vidas == -1:
         pygame.quit() # GAME OVER
+        print(f"Voce perdeu em {temp}!")
+        os.system(r"python Ranking.py") 
 
     # regenera vida a cada 3 perguntas
     if cont_vida % 3 == 0 and cont_vida != 0 and vidas != 3:

@@ -1,10 +1,11 @@
 import sqlite3
 from tkinter import *
 import os
+import datetime
 
 # variavéis globais
 conn = None
-janela = None   
+janela = None  
 
 def fechar_janela_anterior():
     global janela
@@ -47,10 +48,13 @@ def abrir_tela_cadastro():
     entry_senha = Entry(janela, bd=2, font=("Times", "24", "italic" ))
     entry_senha.place(width=304.3, height=41, x=92.9, y=375.7)
 
+    
     def cadastrar():
+        global nome, email
         nome = entry_nome.get()
         email = entry_email.get()
         senha = entry_senha.get()
+        print(f"{nome}\n{email}")
 
         conn = sqlite3.connect('cadastro.db')
         c = conn.cursor()
@@ -68,12 +72,16 @@ def abrir_tela_cadastro():
 
         conn.commit()
         conn.close()
+    def dados():
+        global dados
+        return nome, email
 
     botao_cadastrar = Button(janela, text="Cadastrar", font=("times", 16), width=20, command=cadastrar, bg='darkseagreen').place(width=202, height=47.3, x=150, y=470)
 
     #status do cadastro
     label_status = Label(janela, text="", font=("times", 12))
     label_status.pack(pady=10)
+    
 
 def abrir_tela_login():
     #funçaõ que fecha a janela anterior
@@ -100,9 +108,10 @@ def abrir_tela_login():
 
     def login():
         #verificação de dados digitados pelo usuário
+        global email, senha
         email = entry_email.get()
         senha = entry_senha.get()
-
+        print(f"{email}")
         #conexão
         conn = sqlite3.connect('cadastro.db')
         c = conn.cursor()
@@ -113,7 +122,10 @@ def abrir_tela_login():
             label_status.configure(text="Login bem-sucedido!", fg="green")
             fechar_janela_anterior()
             email = res[1]
-            os.system(r"jogo\WizardCode\WizardCodeJogo.py")
+            global caminho_arquivo
+            caminho_arquivo = os.getcwd()
+            print(caminho_arquivo)
+            #os.system(f"{caminho_arquivo}/jogo/WizardCode/WizardCodeJogo.py")
         else:
             label_status.configure(text="Email ou senha inválidos!", fg="red")
 
@@ -140,6 +152,8 @@ def como_jogar():
     label_texto2.place(x=30, y=240)
     label_texto3 = Label(janela, text=f"A CADA PERGUNTA RESPONDIDA CERTA VOCÊ GANHA PONTOS \nE MUDA DE SKIN, \nATÉ RECEBER A SKIN DE MAGO", font=("times", 12), bg='antiquewhite')
     label_texto3.place(x=1.7, y=340)
+    label_texto3 = Label(janela, text=f"A CADA 3 PERGUNTAS CORRETAS VOCÊ GANHA MAIS 1 VIDA \n(MÁXIMO DE 3 VIDAS)", font=("times", 12), bg='antiquewhite')
+    label_texto3.place(x=15, y=450)
 
 #padrão da janela principal
 janela = Tk()
